@@ -1,3 +1,5 @@
+# Copyright(c) 2015, Shihira Fung <fengzhiping@hotmail.com>
+
 import policy
 
 def _assign_vars(value, containers, context):
@@ -27,10 +29,18 @@ def _call_func(funcname, param, context):
 
 
 def _load(cmdline, context):
+    """
+    Load a module:
+        load: <module_name>
+    """
     context._preload += \
         [__import__(cmdline.arguments[0].name)]
 
 def _apply(cmdline, context):
+    """
+    Call a function with parameters:
+        apply: <function_name>[(p1, p2, ...)] [ -> <return_value> ]
+    """
     func = cmdline.arguments[0]
     param = [ p.evaluate(context) for p in func.parameters ]
     assign = [a.name for a in cmdline.assignments]
@@ -39,10 +49,18 @@ def _apply(cmdline, context):
     _assign_vars(ret, assign, context)
 
 def _yield(cmdline, context):
+    """
+    Yield variables:
+        yield: <var1> [<var2> ... ]
+    """
     vars_to_yield = [context.vars[a.name] for a in cmdline.arguments]
     context._yield += vars_to_yield
 
 def _await(cmdline, context):
+    """
+    Wait for asynchronous operation results:
+        await: <await_tag> [ -> <tag_value> ]
+    """
     tag_request = cmdline.arguments[0].name
     assign = [a.name for a in cmdline.assignments]
 
@@ -65,6 +83,10 @@ def _await(cmdline, context):
 
 
 def _assert(cmdline, context):
+    """
+    Assert a variable or function return value:
+        assert: <var> | <func>[(p1, p2, ...)]
+    """
     assertion = cmdline.arguments[0]
     param = [ p.evaluate(context) for p in assertion.parameters ]
     assign = [a.name for a in cmdline.assignments]

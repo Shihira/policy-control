@@ -1,3 +1,5 @@
+# Copyright(c) 2015, Shihira Fung <fengzhiping@hotmail.com>
+
 import re
 
 class PolicyParsingError(Exception):
@@ -131,6 +133,9 @@ class _parse_cmdline:
         self.assignment_list = []
         self.command = ""
 
+        # leave the command of empty lines empty
+        if not cl[0].strip(): return
+
         self.command = _parse_symbol(cl)
         if not self.command: raise PolicyParsingError(
                 "Missing command name", col = full_len - _len(cl))
@@ -182,7 +187,7 @@ class parse_policy:
         pf = pf.split("\n")
         try:
             for ln_num, ln in enumerate(pf):
-                self.command_line_list += [_parse_cmdline(ln)]
+                self.command_line_list += [_parse_cmdline([ln])]
         except PolicyParsingError, e:
             e.row = ln_num
             raise e

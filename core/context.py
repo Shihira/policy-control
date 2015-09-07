@@ -1,3 +1,5 @@
+# Copyright(c) 2015, Shihira Fung <fengzhiping@hotmail.com>
+
 class context(object):
     """
     Context stores and manages runtime infomation like local-variables, the
@@ -65,10 +67,12 @@ class context(object):
     @staticmethod
     def start_new():
         "start a new context/session, with default context value initialized"
-        import os
+        import string, random
 
         return context(
-                id = os.urandom(32),
+                id = "".join([random.choice(
+                    string.uppercase + string.lowercase + string.digits)
+                    for i in range(32)]),
                 vars = { },
                 ip = 0,
                 _yield = [ ],

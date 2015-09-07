@@ -1,3 +1,5 @@
+# Copyright(c) 2015, Shihira Fung <fengzhiping@hotmail.com>
+
 from context import context
 import commands
 
@@ -40,6 +42,7 @@ class cmdline(object):
 
     def __init__(self):
         self.command = ""
+        self.emptyline = False
         self.essential = False
         self.arguments = []
         self.assignments = []
@@ -55,9 +58,23 @@ class cmdline(object):
         return self
 
     def run(self, context):
-        commands.command_dict[self.command](self, context)
+        if self.command: # which means it's not an empty line
+            commands.command_dict[self.command](self, context)
 
 class policy(object):
+    """
+    `policy` is the main class to dispatch policies. To start
+    running a policy, you should:
+
+    1. load a policy file using `p = policy.load`
+    2. load a context from persistent interface
+    3. load a context using `p.load_context(c)`
+    4. if the policy is waiting for a <tag,value> pair that you've
+       already had, provide it to policy using `p.provide(t, value)`
+    5. resume its running state using `p.resume()`
+    6. resume returns a list containing values the policy file yielded
+    7. you can check if the policy transaction has ended using `p.is_end()`
+    """
 
     def __init__(self):
         self.cmdlines = []
@@ -81,14 +98,17 @@ class policy(object):
         elif not isinstance(policy_file, str):
             raise TypeError("%s is neither a file nor a string" % policy_file)
 
-        from parser import _parse_policy
-        return policy().assign(_parse_policy(policy_file))
+        from parser import parse_policy
+        return policy().assign(parse_policy(policy_file))
 
-    def load_context(c):
+    def load_context(self, c):
         self.context = c
 
-    def provide(await_tag, value):
+    def provide(self, await_tag, value = None):
         self.context._await_tags += [(await_tag, value)]
+
+    def is_end(self):
+        return self.context.ip >= len(self.cmdlines)
 
     def resume(self):
         """
@@ -104,13 +124,13 @@ class policy(object):
 
         try:
             for ln, cmdline in enumerate(self.cmdlines):
-                if cmdline.essential:
+                if ln == self.context.ip:
                     cmdline.run(self.context)
-                elif ln == context.ip:
+                    self.context.ip += 1
+                elif cmdline.essential:
                     cmdline.run(self.context)
-
-                context.ip += 1
         except SleepPolicy, e:
-            return self.context._yield
+            pass # sleep == normal exit
 
+        return self.context._yield
 
