@@ -71,7 +71,7 @@ class _parse_parameter:
                 raise PolicyParsingError(
                         "Invalid symbol", col = full_len - _len(param))
         else:
-            self.param_type = "str"
+            self.param_type = "string"
 
     def __str__(self):
         return "{%s:%s}" % (self.param_type, self.value)
@@ -88,6 +88,7 @@ class _parse_argument:
     def __init__(self, arg):
         full_len = _len(arg)
         self.parameter_list = []
+
         self.name = _parse_symbol(arg)
 
         if not self.name: raise PolicyParsingError(
@@ -119,18 +120,22 @@ class _parse_cmdline:
     argument-list ::= argument-list [ "," ] argument | argument
     full-argument ::= argument-list [ "->" argument-list ]
     command-line ::=
-        command ':'
+        command [ '!' ] ':'
         full-argument
     """
     def __init__(self, cl):
         # IMPORTANT: we locate the failure use subtraction from full_len
         full_len = _len(cl)
+        self.essential = False
         self.argument_list = []
         self.assignment_list = []
-        self.command = _parse_symbol(cl)
+        self.command = ""
 
+        self.command = _parse_symbol(cl)
         if not self.command: raise PolicyParsingError(
                 "Missing command name", col = full_len - _len(cl))
+
+        self.essential = _parse_sign(cl, "!")
         has_colon = _parse_sign(cl, ":")
         if not has_colon: raise PolicyParsingError(
                 "Missing colon ':'", col = full_len - _len(cl))
@@ -160,7 +165,8 @@ class _parse_cmdline:
                 if cl[0][e.col:].strip() or has_comma: raise e
 
     def __str__(self):
-        return "%s: %s -> %s" % (self.command,
+        return "%s%s: %s -> %s" % (self.command,
+                "!" if self.essential else "",
                 "[ %s ]" % ", ".join([str(a) for a in self.argument_list]),
                 "[ %s ]" % ", ".join([str(a) for a in self.assignment_list]),
             )

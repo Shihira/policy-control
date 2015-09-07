@@ -7,7 +7,7 @@ from parser import _parse_sign, _parse_string, _parse_symbol
 from parser import _parse_cmdline, _parse_argument, _parse_parameter
 from parser import PolicyParsingError
 
-if __name__ == "__main__":
+def tests():
     # sign test
     print _parse_sign(["(abcd"], "(")
     print _parse_sign([" -> abcd"], "->")
@@ -46,6 +46,7 @@ if __name__ == "__main__":
     print _parse_cmdline(["command: argument()"])
     print _parse_cmdline(["cmd: argument() -> a"])
     print _parse_cmdline(['cmd: argument(a, "6") argg -> a, b(c)'])
-    try: print _parse_cmdline(['cmd_cmd: arg(a, "6"), arg() -> a, b(c)'])
-    except Exception, e: print e
+    print _parse_cmdline(['cmd_cmd!: arg(a, "6") -> a, b(c)'])
 
+if __name__ == "__main__":
+    tests()
